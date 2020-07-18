@@ -27,7 +27,7 @@ const { ENV, PORT } = process.env;
 app.use(express.json());
 app.use(cookieParser());
 app.use(passport.initialize());
-app.use(passport.session);
+app.use(passport.session());
 
 require('./utils/auth/strategies/basic');
 
@@ -71,8 +71,8 @@ const setResponse = (html, preloadedState, manifest) => {
         // https://redux.js.org/recipes/server-rendering/#security-considerations
         window.__PRELOADED_STATE__ = ${JSON.stringify(preloadedState).replace(/</g, '\\u003c')}
       </script>
-        <script src=${mainBuild} type="text/javascript"></script>
-        <script src=${vendorBuild} type="text/javascript"></script>
+        <script src='${mainBuild}' type="text/javascript"></script>
+        <script src='${vendorBuild}' type="text/javascript"></script>
       </body>
     </html>
   `);
@@ -120,13 +120,20 @@ app.post('/auth/sign-in', async (req, res, next) => {
 app.post('/auth/sign-up', async (req, res, next) => {
   const { body: user } = req;
   try {
-    await axios({
-      url: `${config.apiUrl}/api/auth/sign-up`,
+    const userData = await axios({
+      url: `${process.env.API_URL}/api/auth/sign-up`,
       method: 'post',
-      data: user,
+      data: {
+        'email': user.email,
+        'name': user.name,
+        'password': user.password,
+      },
     });
-
-    res.status(201).json({ message: 'user created' });
+    res.status(201).json({
+      name: req.body.name,
+      email: req.body.email,
+      id: userData.data.id,
+    });
   } catch (error) {
     next(error);
   }
