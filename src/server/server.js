@@ -16,7 +16,6 @@ import axios from 'axios';
 import cookieParser from 'cookie-parser';
 import reducer from '../frontend/reducers';
 import serverRoutes from '../frontend/routes/serverRoutes';
-import initialState from '../frontend/initialState';
 import getManifest from './getManifest';
 
 const app = express();
@@ -43,7 +42,7 @@ if (ENV === 'development') {
   app.use(webpackHotMiddleware(compiler));
 } else {
   app.use((req, res, next) => {
-    if (!req.hashManifest) req.hashManifest = getManifest();
+    req.hashManifest = getManifest();
     next();
   });
   app.use(express.static(`${__dirname}/public`));
@@ -79,12 +78,34 @@ const setResponse = (html, preloadedState, manifest) => {
 };
 
 const renderApp = (req, res) => {
+  let initialState;
+  const { email, name, id } = req.cookies;
+
+  if (id) {
+    initialState = {
+      user: {
+        email, name, id,
+      },
+      myList: [],
+      trends: [],
+      originals: [],
+    };
+  } else {
+    initialState = {
+      user: {},
+      myList: [],
+      trends: [],
+      originals: [],
+    };
+  }
+
   const store = createStore(reducer, initialState);
   const preloadedState = store.getState();
+  const isLogged = (initialState.user.id);
   const html = renderToString(
     <Provider store={store}>
       <StaticRouter location={req.url} context={{}}>
-        { renderRoutes(serverRoutes) }
+        { renderRoutes(serverRoutes(isLogged)) }
       </StaticRouter>
     </Provider>,
   );
