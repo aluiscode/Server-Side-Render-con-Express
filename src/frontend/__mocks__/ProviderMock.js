@@ -10,12 +10,12 @@ import reducer from '../reducers';
 const store = createStore(reducer, initialState, compose(applyMiddleware(thunk)));
 const history = createBrowserHistory();
 
-const ProviderMock = (props) => {
+const ProviderMock = ({ children }) => (
   <Provider store={store}>
     <Router history={history}>
-      {props.children}
+      { children }
     </Router>
-  </Provider>;
-};
+  </Provider>
+);
 
 module.exports = ProviderMock;
